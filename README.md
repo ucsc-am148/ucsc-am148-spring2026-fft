@@ -122,9 +122,16 @@ compared against `torch.fft.fft` live.
 ## Pass criteria
 
 Each rung is graded independently. The count of passed rungs maps to a
-letter grade on the autograder: `[F, D, C, C+, B-, B, B+, A]` for
-`[0, 1, 2, 3, 4, 5, 6, 7]` rungs passed. A rung passes if both correctness
-and perf hold.
+letter grade on the autograder:
+
+| Rungs passed | Grade |
+|---|---|
+| 0       | F  |
+| 1, 2    | D  |
+| 3, 4, 5 | C  |
+| 6, 7    | C+ |
+
+A rung passes if both correctness and perf hold.
 
 Correctness (vs `torch.fft.fft` at each rung's test sizes):
 - F2, F3 (fp32 throughout): max-rel-err < 1e-4.
