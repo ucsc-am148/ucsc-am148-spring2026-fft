@@ -119,20 +119,24 @@ in `twiddles.py` against hardcoded reference values at small N.
 non-default config, run with `FFT_REF=0` (or unset) so your kernel is
 compared against `torch.fft.fft` live.
 
-Pass criteria:
-- F1, F2, F3 max-rel-err < 1e-4 vs `torch.fft.fft` (fp32 paths).
-- F4, F5, F6, F7 max-rel-err < 1e-2 vs `torch.fft.fft` (fp16 storage; floor grows
-  roughly like sqrt(number of stages)).
-- F7 must additionally be bitwise-equal to F6 (the fusion preserves bytes).
+## Pass criteria
 
-## Precision contract (why fp16 has a 1e-2 floor)
+Each rung is graded independently. The count of passed rungs maps to a
+letter grade on the autograder: `[F, D, C, C+, B-, B, B+, A]` for
+`[0, 1, 2, 3, 4, 5, 6, 7]` rungs passed. A rung passes if both correctness
+and perf hold.
 
-F2 and F3 are fp32 throughout, so their error floor is ~1e-7.
+Correctness (vs `torch.fft.fft` at each rung's test sizes):
+- F2, F3 (fp32 throughout): max-rel-err < 1e-4.
+- F1, F4, F5, F6, F7 (fp16 storage, fp32 accumulators): max-rel-err < 2e-2.
+- F7 must additionally be bitwise-equal to F6 at N=2^15 (the fusion
+  preserves bytes).
 
-F4, F5, F6, F7 follow the tcFFT paper's dtype contract: fp16 storage in
-registers / HBM, fp32 matmul and twiddle accumulators, fp16 cast between
-stages. Error floor is ~1e-3 and grows roughly like sqrt(number of stages).
-
-One real limit, not a bug: a unit-amplitude length-N tone has a spectral peak
-of magnitude N, which overflows fp16 (max 65504) for N >~ 65504. Smoke tests
-scale the tone by 1/256 to keep the peak in range.
+Performance (vs the hidden reference, timed on A100):
+- The grader times each rung at multiple sizes and computes the geometric
+  mean of (student_time / ref_time).
+- A rung's perf passes if this geomean is `<= 1.07`. Beating the
+  reference is fine; only the upper bound matters.
+- The floor covers normal timing noise (~1-3% per rung). You don't need
+  to micro-optimize, but an implementation more than 7% slower than the
+  reference will fail the perf gate.
